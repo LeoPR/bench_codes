@@ -88,7 +88,7 @@ total_funcs = []
 for alpha_ratio in alpha_ratios:
     print(f"\nAlpha ratio: {alpha_ratio}")
     text = generate_text(text_size, alpha_ratio, 0)
-    print(text)
+    print(text[:100]) # show sample
     results = []
     for func in functions:
         best, avg, worst, total = benchmark(func, text, run_tests)
