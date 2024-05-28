@@ -6,7 +6,7 @@ import statistics
 from collections import defaultdict, Counter
 
 #####################
-text_size:int = 1000000
+text_size:int = 100000
 alpha_ratios = [0, 0.3, 0.6, 1] # 0 - no alpha, 1 - all aplha
 run_tests = 100
 ##########
@@ -29,6 +29,9 @@ def count_letters_confirmed(text: str) -> int:
 def count_letters_senior(text: str) -> int:
     return sum(map(str.isalpha, text))
 
+def count_letters_senior_petr_ocelik(text: str) -> int:
+    return sum(map(string.ascii_letters.__contains__, text))
+
 def count_letters_staff(text: str) -> int:
     return sum("A" <= letter <= "Z" or "a" <= letter <= "z" for letter in text)
 
@@ -38,16 +41,33 @@ def count_letters_expert(text: str) -> int:
 def count_letters_counter_v1(text: str) -> int:
     return len([True for letter in text if letter.isalpha()])
 
-def count_letters_sum_v1(text: str) -> int:
-    return sum(1 for letter in text if letter.isalpha())
+def count_letters_sum_anthony(text: str) -> int:
+    return sum(97 <= ord(i.lower()) <=122 for i in text)
+
+def count_letters_sum_count(text: str) -> int:
+    return sum(text.count(char) for char in string.ascii_letters)
+
+table_alpha = str.maketrans('','',string.ascii_letters)
+def count_letters_translate_alpha(text: str) -> int:
+    return len(text) - len(text.translate(table_alpha))
+
+table_non_alpha = str.maketrans('','',string.punctuation + string.digits + string.whitespace)
+
+def count_letters_translate_nonaplha(text: str) -> int:
+    return len(text.translate(table_non_alpha))
+
+functions = [count_letters_junior, count_letters_intermediate, count_letters_confirmed, count_letters_senior, count_letters_staff,
+             count_letters_expert, count_letters_counter_v1, count_letters_sum_count,
+             count_letters_translate_alpha, count_letters_translate_nonaplha]
 
 
 def benchmark(func, text, runs=100):
     times = []
+    res = 0
     total_time = 0
     for _ in range(runs):
         start_time = timeit.default_timer()
-        func(text)
+        res = func(text)
         end_time = timeit.default_timer()
         execution_time = end_time - start_time
         times.append(execution_time)
@@ -55,7 +75,7 @@ def benchmark(func, text, runs=100):
     best_time = min(times)
     worst_time = max(times)
     avg_time = statistics.mean(times)
-    return best_time, avg_time, worst_time, total_time
+    return best_time, avg_time, worst_time, total_time, res
 
 def generate_text(length: int, alpha_ratio: float, seed: int) -> str:
     random.seed(seed)
@@ -71,8 +91,6 @@ def generate_text(length: int, alpha_ratio: float, seed: int) -> str:
     random.shuffle(text)
     return ''.join(text)
 
-
-functions = [count_letters_junior, count_letters_intermediate, count_letters_confirmed, count_letters_senior, count_letters_staff, count_letters_expert, count_letters_counter_v1, count_letters_sum_v1]
 
 
 best_times = defaultdict(list)
@@ -91,9 +109,9 @@ for alpha_ratio in alpha_ratios:
     print(text[:100]) # show sample
     results = []
     for func in functions:
-        best, avg, worst, total = benchmark(func, text, run_tests)
-        print(f"{func.__name__}: Best: {best} seconds, Average: {avg} seconds, Worst: {worst} seconds, Total: {total} seconds")
-        results.append((func.__name__, best, avg, worst, total))
+        best, avg, worst, total, res = benchmark(func, text, run_tests)
+        print(f"{func.__name__}: Best: {best} seconds, Average: {avg} seconds, Worst: {worst} seconds, Total: {total} seconds, Result: {res}")
+        results.append((func.__name__, best, avg, worst, total, res))
         best_times[func.__name__].append(best)
         avg_times[func.__name__].append(avg)
         worst_times[func.__name__].append(worst)
