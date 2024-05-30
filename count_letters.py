@@ -5,10 +5,11 @@ import random
 import statistics
 from collections import defaultdict, Counter
 import regex
+
 #####################
 text_size: int = 100000
-alpha_ratios = [0.1, 0.33, 0.66, 1] # 0 - no alpha, 1 - all alpha
-alpha_threshold = True # vary size threshold over alpha_ratios
+alpha_ratios = [0.1, 0.33, 0.66, 1]  # 0 - no alpha, 1 - all alpha
+alpha_threshold = True  # vary size threshold over alpha_ratios
 run_tests = 100
 
 
@@ -59,38 +60,82 @@ def count_letters_sum_anthony(text: str) -> int:
 def count_letters_sum_count(text: str) -> int:
     return sum(text.count(char) for char in string.ascii_letters)
 
+
 alpha_chars = string.ascii_letters
 table_alpha = str.maketrans('', '', alpha_chars)
+
+
 def count_letters_translate_alpha(text: str) -> int:
     return len(text) - len(text.translate(table_alpha))
 
 
 table_non_alpha = str.maketrans('', '', ''.join(set(string.printable) - set(alpha_chars)))
 print(table_non_alpha)
+
+
 def count_letters_translate_non_alpha(text: str) -> int:
     return len(text.translate(table_non_alpha))
 
-compiled_pattern = regex.compile(r'[a-zA-Z]')
-def count_letters_regex(text: str) -> int:
+
+compiled_pattern = regex.compile(r'[a-zA-Z]', regex.MULTILINE)
+compiled_pattern_v2 = regex.compile(r'[a-zA-Z]+', regex.MULTILINE)
+compiled_pattern_v3 = regex.compile(r'[^a-zA-Z]+', regex.MULTILINE)
+
+
+def count_letters_regex_findall(text: str) -> int:
     return len(compiled_pattern.findall(text))
+
+
+def count_letters_regex_split(text: str) -> int:
+    return sum(len(x) for x in compiled_pattern_v3.split(text))
+
+
+def count_letters_regex_sub(text: str) -> int:
+    return len(text) - len(compiled_pattern.sub('', text))
+
+
+def count_letters_regex_sub_v2(text: str) -> int:
+    return len(text) - len(compiled_pattern_v2.sub('', text))
+
+
+def count_letters_regex_sub_v3(text: str) -> int:
+    return len(compiled_pattern_v3.sub('', text))
+
+
+def count_letters_regex_iter(text: str) -> int:
+    return sum(True for x in compiled_pattern.finditer(text))
+
+
+def count_letters_regex_iter_v2(text: str) -> int:
+    return sum(i.end() - i.start() for i in compiled_pattern_v2.finditer(text))
+
 
 def count_letters_dummy(text: str) -> int:
     return True
 
+
 # Functions to test
-functions =[#count_letters_dummy, # only to very if result exists
-            count_letters_translate_non_alpha, # fastest
-            count_letters_translate_alpha, # second fast
-            count_letters_senior,
-            count_letters_sum_count,
-            count_letters_counter_v1,
-            count_letters_junior,
-            count_letters_intermediate,
-            count_letters_confirmed,
-            #count_letters_regex, # unstable, very unbalanced, with no alpha, its faster than any other, but with all alpha its worst 
-            #count_letters_expert, #ultra slow
-            #count_letters_staff, # very slow
-            ]
+functions = [  #count_letters_dummy, # only to very if result exists
+    count_letters_translate_non_alpha,  # fastest
+    count_letters_translate_alpha,  # second fast
+    count_letters_senior,
+    count_letters_sum_count,
+    count_letters_counter_v1,
+    count_letters_junior,
+    # count_letters_intermediate, # slig slow
+    #count_letters_confirmed, # slight slow
+    #count_letters_sum_anthony, # slow
+    count_letters_regex_split,
+    count_letters_regex_findall,
+    count_letters_regex_sub,
+    count_letters_regex_sub_v2,
+    count_letters_regex_sub_v3,
+    #count_letters_regex_iter, # too slow
+    #count_letters_regex_iter_v2, #tooslow
+    #count_letters_regex, # unstable, very unbalanced, with no alpha, its faster than any other, but with all alpha its worst
+    #count_letters_expert, #ultra slow
+    #count_letters_staff, # very slow
+]
 
 
 def benchmark(func, text, runs=100):
@@ -119,7 +164,7 @@ def generate_text(length: int, in_alpha_ratio: float, seed: int, alpha_threshold
     alpha_length = int(length * in_alpha_ratio)
     if alpha_threshold:
         alpha_length *= 1 - random.uniform(0.01, 0.03)
-    alpha_length = int(min(max(alpha_length,1),length))
+    alpha_length = int(min(max(alpha_length, 1), length))
     non_alpha_length = length - alpha_length
     for _ in range(alpha_length):
         in_text.append(random.choice(alpha))
@@ -141,7 +186,7 @@ total_funcs = []
 
 for alpha_ratio in alpha_ratios:
     print(f"\nAlpha ratio: {alpha_ratio}")
-    text = generate_text(text_size, alpha_ratio, 0, alpha_threshold)
+    text = generate_text(text_size, alpha_ratio, 10, alpha_threshold)
     print(f'text size: {len(text)} ...')  # show text size
     print(f'text sample: {text[:100]} ...')  # show sample
     results = []
